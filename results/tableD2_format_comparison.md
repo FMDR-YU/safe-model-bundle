@@ -1,0 +1,9 @@
+| format      | code_exec_on_load                     | language         | portability        | parity_max_abs_delta   | label_agreement   | size_kb   | model_families                                |
+|:------------|:--------------------------------------|:-----------------|:-------------------|:-----------------------|:------------------|:----------|:----------------------------------------------|
+| pickle      | yes (unrestricted)                    | Python-only      | none               | 0.0                    | 1.0               | 318.7     | all Python objects                            |
+| joblib      | yes (unrestricted)                    | Python-only      | none               | 0.0                    | 1.0               | 337.6     | all Python objects                            |
+| skops       | no (explicit trusted-types allowlist) | Python (sklearn) | sklearn-family     | 0.0                    | 1.0               | 3550.2    | tree-based / traditional ML                   |
+| ONNX        | no (data/graph format)                | language-neutral | cross-framework    | 0.0                    | 1.0               | 120.8     | tree-based / NN (via converters)              |
+| safetensors | no                                    | language-neutral | weights only       | documented             | documented        | n/a       | neural networks (tensors only; N/A for trees) |
+| .pt (torch) | yes (if weights_only=False)           | Python (torch)   | framework-specific | documented             | documented        | n/a       | neural networks                               |
+| .gguf       | no                                    | language-neutral | framework-specific | documented             | documented        | n/a       | large language models                         |

@@ -1,0 +1,15 @@
+{
+  "data_version": "koges-synth-v1",
+  "master_seed": 20260601,
+  "data_hash": "d45e9987708e634fc1e246d42c2dd5f0570d034fe3df3789ec97052a9083b74e",
+  "model_artifact": "safe_model.pkl",
+  "model_hash": "428234cbc30b066363d2fd71cf2877057a2fb921e16797eb81800ad461d08087",
+  "env_hash": "f901fdc45ef5d842d610866f31f0e4c526503552122710b4e64f5088b1928f9d",
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "metrics": {
+    "utility_auc": 0.7328
+  },
+  "manifest_digest": "dfd4dc44e54d572d925384e7e0612c8d0726d204d91af3fc76bed961097188eb",
+  "escrow_signature": "ea894b7bd4cbf9d550398a7a6581909ee17b39f99b66553984078114dfed22f0"
+}

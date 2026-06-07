@@ -1,0 +1,215 @@
+{
+  "risk_a": {
+    "pickle_executes_code_on_load": true,
+    "picklescan_detected": true,
+    "picklescan_globals_flagged": [
+      "builtins.eval"
+    ],
+    "note": "Detection is heuristic: scanners flag known-dangerous globals (eval/exec/os.system/posix.system) but can be bypassed by obfuscation or novel gadget chains -- so scanning mitigates but does not eliminate Risk A. Safe formats remove the attack surface."
+  },
+  "risk_b_mia_agg": {
+    "leaky": {
+      "model_kind": "leaky",
+      "n_seeds": 10,
+      "utility_auc": 0.6631,
+      "utility_auc_ci95_lo": 0.6403,
+      "utility_auc_ci95_hi": 0.6858,
+      "utility_auc_halfwidth": 0.0227,
+      "train_auc": 1.0,
+      "train_auc_ci95_lo": 1.0,
+      "train_auc_ci95_hi": 1.0,
+      "train_auc_halfwidth": 0.0,
+      "train_test_gap": 0.3369,
+      "train_test_gap_ci95_lo": 0.3142,
+      "train_test_gap_ci95_hi": 0.3597,
+      "train_test_gap_halfwidth": 0.0227,
+      "mia_shadow_auc": 0.5804,
+      "mia_shadow_auc_ci95_lo": 0.5666,
+      "mia_shadow_auc_ci95_hi": 0.5942,
+      "mia_shadow_auc_halfwidth": 0.0138,
+      "mia_threshold_auc": 0.5519,
+      "mia_threshold_auc_ci95_lo": 0.5396,
+      "mia_threshold_auc_ci95_hi": 0.5643,
+      "mia_threshold_auc_halfwidth": 0.0124,
+      "mia_tpr_at_fpr_0.01": 0.0112,
+      "mia_tpr_at_fpr_0.01_ci95_lo": 0.0055,
+      "mia_tpr_at_fpr_0.01_ci95_hi": 0.0169,
+      "mia_tpr_at_fpr_0.01_halfwidth": 0.0057,
+      "mia_tpr_at_fpr_0.10": 0.1219,
+      "mia_tpr_at_fpr_0.10_ci95_lo": 0.1098,
+      "mia_tpr_at_fpr_0.10_ci95_hi": 0.1341,
+      "mia_tpr_at_fpr_0.10_halfwidth": 0.0121
+    },
+    "safe": {
+      "model_kind": "safe",
+      "n_seeds": 10,
+      "utility_auc": 0.7025,
+      "utility_auc_ci95_lo": 0.6791,
+      "utility_auc_ci95_hi": 0.7258,
+      "utility_auc_halfwidth": 0.0234,
+      "train_auc": 0.8627,
+      "train_auc_ci95_lo": 0.8469,
+      "train_auc_ci95_hi": 0.8785,
+      "train_auc_halfwidth": 0.0158,
+      "train_test_gap": 0.1602,
+      "train_test_gap_ci95_lo": 0.1269,
+      "train_test_gap_ci95_hi": 0.1935,
+      "train_test_gap_halfwidth": 0.0333,
+      "mia_shadow_auc": 0.5262,
+      "mia_shadow_auc_ci95_lo": 0.5163,
+      "mia_shadow_auc_ci95_hi": 0.5361,
+      "mia_shadow_auc_halfwidth": 0.0099,
+      "mia_threshold_auc": 0.5061,
+      "mia_threshold_auc_ci95_lo": 0.4964,
+      "mia_threshold_auc_ci95_hi": 0.5158,
+      "mia_threshold_auc_halfwidth": 0.0097,
+      "mia_tpr_at_fpr_0.01": 0.0206,
+      "mia_tpr_at_fpr_0.01_ci95_lo": 0.0182,
+      "mia_tpr_at_fpr_0.01_ci95_hi": 0.023,
+      "mia_tpr_at_fpr_0.01_halfwidth": 0.0024,
+      "mia_tpr_at_fpr_0.10": 0.1246,
+      "mia_tpr_at_fpr_0.10_ci95_lo": 0.1141,
+      "mia_tpr_at_fpr_0.10_ci95_hi": 0.1351,
+      "mia_tpr_at_fpr_0.10_halfwidth": 0.0105
+    }
+  },
+  "risk_b_mia_seed0": {
+    "leaky": {
+      "model_kind": "leaky",
+      "mia_shadow_auc": 0.5931,
+      "utility_auc": 0.6903
+    },
+    "safe": {
+      "model_kind": "safe",
+      "mia_shadow_auc": 0.5137,
+      "utility_auc": 0.7328
+    }
+  },
+  "synth_disclosure": {
+    "n_synth": 8000,
+    "exact_duplicates": 0,
+    "exact_duplicate_rate": 0.0,
+    "nn_dist_min": 0.5485,
+    "nn_dist_p01": 0.917,
+    "nn_dist_mean": 1.8339,
+    "nn_dist_metric": "Euclidean on per-column SD-standardised features"
+  },
+  "synth_dcr": {
+    "metric": "Euclidean on per-column SD-standardised features",
+    "dcr_synth_min": 0.5485,
+    "dcr_real_min": 0.7031,
+    "dcr_synth_median": 1.7982,
+    "dcr_real_median": 1.8319,
+    "min_ratio_synth_over_real": 0.78,
+    "pct_synth_below_real_p01": 1.71
+  },
+  "gate3": {
+    "data_hash_match": true,
+    "rerun_utility_auc": 0.732778,
+    "utility_auc_delta": 2.169e-05,
+    "metric_tolerance": 0.0001,
+    "reproducible": true
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.5,
+      "leaky_decision": "BLOCK",
+      "safe_decision": "BLOCK"
+    },
+    {
+      "threshold": 0.52,
+      "leaky_decision": "BLOCK",
+      "safe_decision": "PASS"
+    },
+    {
+      "threshold": 0.55,
+      "leaky_decision": "BLOCK",
+      "safe_decision": "PASS"
+    },
+    {
+      "threshold": 0.58,
+      "leaky_decision": "BLOCK",
+      "safe_decision": "PASS"
+    },
+    {
+      "threshold": 0.6,
+      "leaky_decision": "PASS",
+      "safe_decision": "PASS"
+    }
+  ],
+  "cost": {
+    "currency": "KRW",
+    "cloud": "Naver Cloud Platform (Standard 2vCPU/8GB + Object Storage)",
+    "krw_per_usd": 1350.0,
+    "revision_window_months": 6,
+    "warm_floor_krw": 414000.0,
+    "warm_floor_usd": 306.67,
+    "warm_seat_low_krw": 8775000.0,
+    "warm_seat_low_usd": 6500.0,
+    "warm_seat_high_krw": 13500000.0,
+    "warm_seat_high_usd": 10000.0,
+    "escrow_storage_krw": 0.02,
+    "escrow_rerun_krw": 500.0,
+    "escrow_total_krw": 500.02,
+    "escrow_total_usd": 0.37,
+    "savings_vs_floor_pct": 99.88,
+    "savings_vs_seat_low_pct": 99.99,
+    "savings_vs_seat_high_pct": 100.0,
+    "warm_keeping_krw": 414000.0,
+    "warm_keeping_usd": 306.67,
+    "savings_pct": 99.88
+  },
+  "dp_sweep_supplementary": [
+    {
+      "epsilon": 0.5,
+      "utility_auc": 0.4789,
+      "mia_shadow_auc": 0.5142,
+      "mia_tpr_at_fpr_0.01": 0.01
+    },
+    {
+      "epsilon": 1.0,
+      "utility_auc": 0.4787,
+      "mia_shadow_auc": 0.5201,
+      "mia_tpr_at_fpr_0.01": 0.0233
+    },
+    {
+      "epsilon": 2.0,
+      "utility_auc": 0.5,
+      "mia_shadow_auc": 0.5011,
+      "mia_tpr_at_fpr_0.01": 0.0103
+    },
+    {
+      "epsilon": 4.0,
+      "utility_auc": 0.5476,
+      "mia_shadow_auc": 0.5093,
+      "mia_tpr_at_fpr_0.01": 0.0067
+    },
+    {
+      "epsilon": 8.0,
+      "utility_auc": 0.612,
+      "mia_shadow_auc": 0.5012,
+      "mia_tpr_at_fpr_0.01": 0.01
+    },
+    {
+      "epsilon": "inf (non-DP safe)",
+      "utility_auc": 0.7328,
+      "mia_shadow_auc": 0.5137,
+      "mia_tpr_at_fpr_0.01": 0.0167
+    }
+  ],
+  "artifacts": {
+    "synthetic_population": "synthetic_population.csv",
+    "fig3": "fig3_mia_roc.png",
+    "figD2_dcr": "figD2_dcr.png",
+    "figS1_dp_sweep": "figS1_dp_sweep.png",
+    "tables": [
+      "tableD0_synth_fidelity",
+      "tableD0b_dcr",
+      "tableD1_risk_decomposition",
+      "tableD2_format_comparison",
+      "tableD3_three_gate_results",
+      "tableD3b_threshold_sweep",
+      "tableS1_dp_sweep"
+    ]
+  }
+}
