@@ -31,7 +31,7 @@ def run(out_dir, model_artifact_kb: float = 50.0):
     vals = [b for _, b in items]
     colors = ["#2ca02c", "#ff7f0e", "#d62728", "#8c1a1a"]
 
-    plt.figure(figsize=(8.0, 3.4))
+    plt.figure(figsize=(9.0, 3.6))
     ys = list(range(len(items)))
     plt.barh(ys, vals, color=colors)
     plt.xscale("log")
@@ -39,12 +39,11 @@ def run(out_dir, model_artifact_kb: float = 50.0):
     plt.yticks(ys, labels, fontsize=9)
     plt.xlabel("Cost over a 6-month revision window (KRW, log scale)")
     for i, v in enumerate(vals):
-        plt.text(v * 1.3, i, f"₩{v:,.0f}  (≈{_usd(v, fx)})",
+        plt.text(v * 1.25, i, f"₩{v:,.0f}  (≈{_usd(v, fx)})",
                  va="center", fontsize=8)
-    plt.title("Reproducing a model: Safe Model Bundle escrow vs keeping the "
-              "environment open\n(Fig S2 / Supplementary; Naver Cloud Platform list prices)",
-              fontsize=9)
-    plt.xlim(right=max(vals) * 120)
+    plt.title("Safe Model Bundle escrow vs keeping the environment warm "
+              "(6-month revision; NCP list prices)", fontsize=9)
+    plt.xlim(left=min(v for v in vals if v > 0) / 3, right=max(vals) * 1000)
     plt.tight_layout()
     path = os.path.join(out_dir, "figS2_cost.png")
     plt.savefig(path, dpi=150)

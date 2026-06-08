@@ -1,46 +1,20 @@
-# Safe Model Bundle — reproducibility package
+# koges_model_export_study
 
-Companion code and synthetic data for:
+폐쇄형 의료데이터 플랫폼의 모델 반출 거버넌스 논문용 PoC. **실데이터 미사용** — 파이프라인이 KoGES 변수 스키마만 모사해 합성데이터를 자체 생성하고, 그 위에서 PoC(D1~D4)를 실행해 Fig3·TableD0~D3을 산출한다.
 
-> **Safe and Reproducible Model Export from Closed Clinical Data Platforms: A Governance Specification and Synthetic-Data Proof of Concept.** Hojun Yu (2026).
+## 먼저 읽기
+- `claude.md` — 프로젝트 컨텍스트·규약·스코프.
+- `docs/HANDOFF_koges_validation.md` — 실행 지침 + Claude Code 프롬프트(§8).
+- `docs/manuscript.md` — 논문 통합 초안.
 
-This repository demonstrates, on **synthetic data only**, that a trained model can be exported from a closed clinical-data platform in a form that is simultaneously (1) **safe to release** — no code execution on load, audited for membership-inference leakage — and (2) **sufficient to reproduce** the analysis on demand. No real patient records are used anywhere.
+## 폴더
+- `poc/` — 파이프라인(config·run_all·src). 설계·게이트 정의 불변. 산출물은 `poc/outputs/`.
+- `results/` — 공유용 Fig/Table·results 노트.
 
-## Contents
-- `poc/` — the pipeline and its modules
-  - `run_all.py` — orchestrates D1→D4 + the supplementary DP sweep
-  - `src/d1_synthesize.py` — synthetic KoGES-schema cohort (logistic DGP + synthpop-style CART), fidelity + DCR disclosure checks
-  - `src/d2_risk_a_pickle.py` — pickle deserialization code-execution demo (Risk A)
-  - `src/d2_risk_b_mia.py` — shadow-model + loss-threshold membership inference (Risk B), leaky vs safe, multi-seed CI
-  - `src/d3_formats.py` — pickle → skops/ONNX conversion, code-exec & inference-parity check (Gate 1)
-  - `src/d4_gates.py` — leakage audit + threshold sweep (Gate 2), signed escrow + reproduction + cost (Gate 3)
-  - `src/supp_dp.py` — supplementary differential-privacy ε-sweep
-  - `config.py` — all fixed parameters (seed, cohort, thresholds, NCP cost model)
-- `results/` — canonical exhibits (figures, tables, `summary.json`, `escrow_manifest.json`)
+## 실행
+1. `cd poc && pip install -r requirements.txt`  (또는 루트에서 `bash setup.sh` / `setup.ps1`)
+2. `python run_all.py`  → D1(합성)~D4(3-gate), 산출물 생성.
+3. Claude Code로 자동 진행 시: `docs/HANDOFF_koges_validation.md` §8 프롬프트 붙여넣기.
 
-## Reproduce
-```bat
-cd poc
-python -m venv .venv
-.venv\Scripts\pip install -r requirements.txt
-.venv\Scripts\python run_all.py
-```
-The pipeline is **deterministic**: numeric backends are pinned to a single thread and the tree models use XGBoost's exact split-finder, so reruns are bit-identical — including the multi-seed shadow-model attack. Regenerated outputs match those in `results/`.
-
-Environment note: developed on Python 3.12 with `pandas==2.2.3`, `numpy==2.2.6`, `scikit-learn==1.6.1` (pinned to avoid Windows wheel issues); other versions per `poc/requirements.txt`.
-
-## Key results (synthetic; mechanism demonstration, not real-world risk estimates)
-- **Gate 1 (format):** skops and ONNX load with no code execution and reproduce predictions exactly (max |Δprob| = 0.0).
-- **Gate 3 (escrow):** on-demand re-run reproduces the data hash exactly and held-out utility within ~3×10⁻⁵.
-- **Gate 2 (leakage):** a leaky model (membership-inference AUC ≈0.58, 95% CI 0.567–0.594) is blocked while a regularized model of equal-or-better utility (≈0.53, CI 0.516–0.536) passes; decision stable over a 0.50–0.60 threshold sweep.
-- **Cost:** escrow-plus-rerun is roughly three to four orders of magnitude cheaper than keeping the analysis environment open.
-
-## Data
-All data are synthetic, generated from a documented model of the KoGES *variable schema* (no real KoGES records). The generator and the fixed seed are included.
-
-## License
-- Code: **MIT** (see `LICENSE`).
-- Data and documentation: **CC-BY-4.0**.
-
-## Citation
-Yu H. Safe and Reproducible Model Export from Closed Clinical Data Platforms: A Governance Specification and Synthetic-Data Proof of Concept. 2026. (DOI assigned on release.)
+## 가드레일
+실제 KoGES 레코드는 쓰지 않는다(자체 합성). realism 보강이 필요하면 공개 집계 통계만 사용. 모델 바이너리는 커밋 제외.
