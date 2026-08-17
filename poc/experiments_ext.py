@@ -261,14 +261,14 @@ def run_sweeps():
     ax[0].axhline(0.55, ls="--", color="0.4", lw=1)
     ax[0].set_xscale("log"); ax[0].set_xlabel("training cohort size (log)")
     ax[0].set_ylabel("membership-inference AUC")
-    ax[0].set_title("(a) leakage vs cohort size", fontsize=10)
+    ax[0].set_title("(a)", loc="left", fontsize=11, fontweight="bold")
     ax[1].errorbar(cap["n_rounds"], cap["mia_auc"],
                    yerr=[cap["mia_auc"] - cap["ci95_lo"], cap["ci95_hi"] - cap["mia_auc"]],
                    marker="s", color="black", lw=1.5, capsize=3)
     ax[1].axhline(0.55, ls="--", color="0.4", lw=1)
     ax[1].set_xscale("log"); ax[1].set_xlabel("model complexity (boosting rounds, log)")
     ax[1].set_ylabel("membership-inference AUC")
-    ax[1].set_title("(b) leakage vs complexity (N=300)", fontsize=10)
+    ax[1].set_title("(b)", loc="left", fontsize=11, fontweight="bold")
     for a in ax:
         a.grid(True, ls=":", lw=0.5, color="0.8")
     fig.tight_layout()
