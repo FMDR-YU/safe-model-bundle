@@ -18,7 +18,7 @@ from config import (FEATURES, OUTCOME, MIA_AUC_PASS_THRESHOLD, DATA_VERSION, COS
                     THRESHOLD_SWEEP)
 from src.utils import (make_model, model_quality, sha256_file, sha256_df,
                        hmac_sign, capture_environment, save_json)
-from src.d1_synthesize import generate_population, membership_split
+from src.d1_synthesize import get_population, membership_split
 
 
 # --------------------------------------------------------------------------- #
@@ -77,7 +77,7 @@ def build_escrow_manifest(model_artifact_path: str, data_df: pd.DataFrame,
 def reproduce_and_verify(manifest: dict, seed: int, n_population: int,
                          model_kind: str) -> dict:
     """Re-run from the manifest's seed/data-version and check it reproduces."""
-    df2 = generate_population(n_population, seed)
+    df2 = get_population(seed)
     members2, _, nonmembers2 = membership_split(df2, seed)
     model2 = make_model(model_kind, seed=seed + 7)
     model2.fit(members2[FEATURES], members2[OUTCOME])
@@ -156,9 +156,16 @@ def cost_model(model_artifact_kb: float) -> dict:
 
 
 def run(leaky_metrics, safe_metrics, members, full_df, seed,
-        model_artifact_path, out_dir) -> pd.DataFrame:
+        model_artifact_path, out_dir, escrow_metrics=None) -> pd.DataFrame:
     """Assemble Table D3 across the leaky (current practice) and the gated/safe
-    conditions, plus a threshold sweep."""
+    conditions, plus a threshold sweep.
+
+    leaky_metrics / safe_metrics carry the Gate-2 leakage + utility used for the
+    (10-seed mean) release decision and the table. escrow_metrics, if given,
+    carries the SPECIFIC reproducible instance (seed 0) that is escrowed and
+    re-executed for the Gate-3 reproducibility check -- so the hash/metric match
+    is verified against that instance, not against the multi-seed mean."""
+    esc = escrow_metrics if escrow_metrics is not None else safe_metrics
     rows = []
 
     # leaky: would it pass Gate 2?
@@ -176,9 +183,9 @@ def run(leaky_metrics, safe_metrics, members, full_df, seed,
     g2_s = gate2_decision(safe_metrics["mia_shadow_auc"])
     manifest = build_escrow_manifest(
         model_artifact_path, full_df, seed,
-        {"utility_auc": safe_metrics["utility_auc"]}, out_dir)
+        {"utility_auc": esc["utility_auc"]}, out_dir)
     repro = reproduce_and_verify(
-        manifest, seed, len(full_df), safe_metrics["model_kind"])
+        manifest, seed, len(full_df), esc["model_kind"])
     cost = cost_model(os.path.getsize(model_artifact_path) / 1024)
 
     rows.append({

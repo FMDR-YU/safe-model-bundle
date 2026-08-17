@@ -240,6 +240,35 @@ def plot_dcr(d_syn, d_real, out_path: str):
 
 
 # --------------------------------------------------------------------------- #
+# 2b. Cohort provider (substrate-aware; T4)
+# --------------------------------------------------------------------------- #
+_POP_CACHE: dict = {}
+
+
+def get_population(seed: int) -> pd.DataFrame:
+    """Return the researcher's cohort for the configured substrate.
+
+    - "koges": a fresh seeded synthetic draw per seed (legacy DGP).
+    - public ("synpuf"/"synthea"): a FIXED standard public dataset loaded once
+      and cached; the seed then varies only the downstream membership split and
+      shadow models, not the data (the DGP is external to the authors -> R1#2).
+    """
+    from config import SUBSTRATE, N_POPULATION, SYNPUF_CSV, SYNTHEA_DIR
+    if SUBSTRATE == "koges":
+        return generate_population(N_POPULATION, seed)
+    if "pop" not in _POP_CACHE:
+        if SUBSTRATE == "synpuf":
+            from src.synpuf_loader import load_synpuf_cohort
+            _POP_CACHE["pop"] = load_synpuf_cohort(SYNPUF_CSV).reset_index(drop=True)
+        elif SUBSTRATE == "synthea":
+            from src.omop_loader import load_omop_cohort
+            _POP_CACHE["pop"] = load_omop_cohort(SYNTHEA_DIR).reset_index(drop=True)
+        else:
+            raise ValueError(f"unknown SUBSTRATE: {SUBSTRATE}")
+    return _POP_CACHE["pop"]
+
+
+# --------------------------------------------------------------------------- #
 # 3. Membership split
 # --------------------------------------------------------------------------- #
 def membership_split(df: pd.DataFrame, seed: int, n_members: int | None = None):

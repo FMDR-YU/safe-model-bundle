@@ -37,3 +37,6 @@ koges_*.csv
 poc/outputs/
 __pycache__/
 .venv/
+
+# 1st-coder (coder_HY) audit codings ? keep private until inter-coder kappa is computed (blind)
+poc/policy_audit_codings.csv

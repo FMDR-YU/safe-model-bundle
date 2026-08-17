@@ -52,6 +52,50 @@ OUTCOME = "t2dm"
 FEATURES = CONTINUOUS_VARS + CATEGORICAL_VARS
 
 # ----------------------------------------------------------------------------
+# Data substrate (T4: standard PUBLIC benchmark replaces the KoGES-schema DGP,
+# so the data-generating process is external to the authors -- cuts reviewer
+# R1#2 "tautology"). Select with env var POC_SUBSTRATE.
+#   "synpuf"  = CMS DE-SynPUF 2008 Beneficiary Summary (~116k, claims) -- MAIN
+#   "synthea" = OHDSI Synthea27Nj OMOP (metabolic labs) -- 27-person demo, smoke test only
+#   "koges"   = legacy self-authored KoGES-schema synthetic DGP (pre-pivot)
+# ----------------------------------------------------------------------------
+SUBSTRATE = os.environ.get("POC_SUBSTRATE", "synpuf")
+
+
+def _resolve_data_root() -> str:
+    """Locate the public CDM data directory so the repo runs both standalone and
+    inside the paper's project layout. Priority: POC_DATA_ROOT env var, then a
+    repo-relative `data/cdm` (recommended for a fresh clone), then the project
+    layout `../../data/cdm`. Returns the last candidate as the default target
+    even if it does not yet exist (so the error message names where to put data).
+    """
+    env = os.environ.get("POC_DATA_ROOT")
+    candidates = ([env] if env else []) + [
+        os.path.join(ROOT, "..", "data", "cdm"),        # repo-relative (clone)
+        os.path.join(ROOT, "..", "..", "data", "cdm"),  # project layout
+    ]
+    for c in candidates:
+        if c and os.path.isdir(c):
+            return os.path.abspath(c)
+    return os.path.abspath(candidates[-1])
+
+
+_DATA_ROOT = _resolve_data_root()
+SYNPUF_CSV = os.path.join(_DATA_ROOT, "synpuf",
+                          "DE1_0_2008_Beneficiary_Summary_File_Sample_1.csv")
+SYNTHEA_DIR = os.path.join(_DATA_ROOT, "Synthea27Nj")
+
+if SUBSTRATE == "synpuf":
+    from src.synpuf_loader import (CONTINUOUS_VARS, CATEGORICAL_VARS,  # noqa: F811,E402
+                                   OUTCOME, FEATURES)
+    DATA_VERSION = "cms-desynpuf-2008-sample1"
+elif SUBSTRATE == "synthea":
+    from src.omop_loader import (CONTINUOUS_VARS, CATEGORICAL_VARS,    # noqa: F811,E402
+                                 OUTCOME, FEATURES)
+    DATA_VERSION = "ohdsi-synthea27nj-omop"
+# else "koges": keep the KoGES-schema defaults above (DATA_VERSION=koges-synth-v1)
+
+# ----------------------------------------------------------------------------
 # Membership-inference attack (Risk B)
 # ----------------------------------------------------------------------------
 N_SHADOW_MODELS = 16            # Shokri-style shadow models

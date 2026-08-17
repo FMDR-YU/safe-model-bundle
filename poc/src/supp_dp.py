@@ -18,12 +18,12 @@ import matplotlib.pyplot as plt
 
 from config import (OUTCOME, FEATURES, N_POPULATION, MASTER_SEED, DP_EPSILON_SWEEP)
 from src.utils import make_model, model_quality, save_table
-from src.d1_synthesize import generate_population, membership_split
+from src.d1_synthesize import get_population, membership_split
 from src.d2_risk_b_mia import shadow_attack
 
 
 def run(out_dir, seed: int = MASTER_SEED):
-    df = generate_population(N_POPULATION, seed)
+    df = get_population(seed)
     members, attacker, nonmembers = membership_split(df, seed)
 
     rows = []

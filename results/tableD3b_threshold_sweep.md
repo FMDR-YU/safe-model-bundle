@@ -1,7 +1,7 @@
 |   threshold | leaky_decision   | safe_decision   |
 |------------:|:-----------------|:----------------|
 |        0.5  | BLOCK            | BLOCK           |
-|        0.52 | BLOCK            | PASS            |
+|        0.52 | BLOCK            | BLOCK           |
 |        0.55 | BLOCK            | PASS            |
 |        0.58 | BLOCK            | PASS            |
-|        0.6  | PASS             | PASS            |
+|        0.6  | BLOCK            | PASS            |

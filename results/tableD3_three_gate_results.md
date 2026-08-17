@@ -1,4 +1,4 @@
 | condition                             | gate1_format               |   gate2_mia_auc | gate2_decision                | gate3_reproducible      |   utility_auc |
 |:--------------------------------------|:---------------------------|----------------:|:------------------------------|:------------------------|--------------:|
-| leaky pickle (current practice)       | pickle (code-exec on load) |          0.5931 | BLOCK (re-train, regularised) | n/a (no escrow)         |        0.6903 |
-| 3-gate (safe format + audit + escrow) | ONNX/skops (no code-exec)  |          0.5137 | PASS (release)                | yes (hash+metric match) |        0.7328 |
+| leaky pickle (current practice)       | pickle (code-exec on load) |          0.7552 | BLOCK (re-train, regularised) | n/a (no escrow)         |        0.8455 |
+| 3-gate (safe format + audit + escrow) | ONNX/skops (no code-exec)  |          0.5471 | PASS (release)                | yes (hash+metric match) |        0.8797 |

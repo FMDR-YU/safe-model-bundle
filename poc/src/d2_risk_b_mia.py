@@ -30,7 +30,7 @@ from sklearn.metrics import roc_auc_score, roc_curve
 from config import (OUTCOME, FEATURES, N_SHADOW_MODELS, N_TRAIN_MEMBERS,
                     N_POPULATION)
 from src.utils import make_model, predict_proba_pos, per_example_loss, model_quality
-from src.d1_synthesize import generate_population, membership_split
+from src.d1_synthesize import get_population, membership_split
 
 # t_{0.975, df=9} for the 10-seed 95% CI (mean +/- t * sd / sqrt(n))
 _T_975_DF9 = 2.262
@@ -92,8 +92,8 @@ def shadow_attack(kind, target_model, members, attacker_pool, nonmembers, seed,
 
 
 def run_one(kind, seed, epsilon: float = 1.0) -> dict:
-    """One full draw for one condition: synthesise -> split -> train -> attack."""
-    df = generate_population(N_POPULATION, seed)
+    """One full draw for one condition: load/synthesise -> split -> train -> attack."""
+    df = get_population(seed)
     members, attacker, nonmembers = membership_split(df, seed)
     model = make_model(kind, seed=seed + 7, epsilon=epsilon)
     model.fit(members[FEATURES], members[OUTCOME])

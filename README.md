@@ -1,20 +1,56 @@
-# koges_model_export_study
+# safe-model-bundle
 
-폐쇄형 의료데이터 플랫폼의 모델 반출 거버넌스 논문용 PoC. **실데이터 미사용** — 파이프라인이 KoGES 변수 스키마만 모사해 합성데이터를 자체 생성하고, 그 위에서 PoC(D1~D4)를 실행해 Fig3·TableD0~D3을 산출한다.
+Reference implementation for **"Safe and Reproducible Model Export from Closed Clinical Data Platforms."**
+A *Safe Model Bundle* is a checkable export contract for a trained model that composes three independent gates:
 
-## 먼저 읽기
-- `claude.md` — 프로젝트 컨텍스트·규약·스코프.
-- `docs/HANDOFF_koges_validation.md` — 실행 지침 + Claude Code 프롬프트(§8).
-- `docs/manuscript.md` — 논문 통합 초안.
+1. **Gate 1 — format:** convert the model to a code-free serialization format (skops / ONNX) that carries no executable payload, with lossless inference parity against pickle.
+2. **Gate 2 — leakage audit:** release only if a membership-inference audit stays at or below a threshold (a lower bound against the audited attack).
+3. **Gate 3 — escrow:** bind the model to its environment (container, dependency lock, seed, data version) under a signed hash, so a revision re-run reproduces the analysis.
 
-## 폴더
-- `poc/` — 파이프라인(config·run_all·src). 설계·게이트 정의 불변. 산출물은 `poc/outputs/`.
-- `results/` — 공유용 Fig/Table·results 노트.
+`run_all.py` runs the whole pipeline end-to-end on a **public benchmark** and regenerates every exhibit deterministically. No real patient data are used.
 
-## 실행
-1. `cd poc && pip install -r requirements.txt`  (또는 루트에서 `bash setup.sh` / `setup.ps1`)
-2. `python run_all.py`  → D1(합성)~D4(3-gate), 산출물 생성.
-3. Claude Code로 자동 진행 시: `docs/HANDOFF_koges_validation.md` §8 프롬프트 붙여넣기.
+## Data (required before running)
 
-## 가드레일
-실제 KoGES 레코드는 쓰지 않는다(자체 합성). realism 보강이 필요하면 공개 집계 통계만 사용. 모델 바이너리는 커밋 제외.
+The default substrate is the **CMS DE-SynPUF** 2008 Beneficiary Summary, a public, freely downloadable synthetic-claims file (no real beneficiaries).
+
+1. Download **DE-SynPUF Sample 1 — 2008 Beneficiary Summary** from CMS:
+   <https://www.cms.gov/data-research/statistics-trends-and-reports/medicare-claims-synthetic-public-use-files/cms-2008-2010-data-entrepreneurs-synthetic-public-use-file-de-synpuf>
+2. Unzip and place the CSV at **`data/cdm/synpuf/DE1_0_2008_Beneficiary_Summary_File_Sample_1.csv`** (repo-relative).
+   - Alternatively point the loader elsewhere with `POC_DATA_ROOT=/path/to/cdm` (the loader expects `<root>/synpuf/DE1_0_2008_Beneficiary_Summary_File_Sample_1.csv`).
+3. (Optional) The OHDSI `Synthea27Nj` OMOP dataset can be placed at `data/cdm/Synthea27Nj/` for the `POC_SUBSTRATE=synthea` smoke test — note this is a 27-person toy set, not an analysis substrate.
+
+Data files are **not** committed to this repository.
+
+## Run
+
+```bash
+cd poc
+pip install -r requirements.txt          # Python 3.12 recommended
+python run_all.py                        # POC_SUBSTRATE defaults to "synpuf"
+```
+
+Substrate is selected with the `POC_SUBSTRATE` env var: `synpuf` (default, ~116k claims), `synthea` (OMOP smoke test), or `koges` (legacy self-authored synthetic DGP, no external data needed).
+
+## Outputs
+
+`run_all.py` writes exhibits to `poc/outputs/`; the canonical shared copies are in **`results/`**:
+`summary.json`, `fig3_mia_roc.png`, `figS1_dp_sweep.png`, `figS2_cost.png`, `escrow_manifest.json`, and the tables `tableD1`–`tableD3b`, `tableS1`.
+
+## Policy-audit inter-coder reliability
+
+`poc/kappa_policy_audit.py` computes Cohen's κ (overall and per dimension, with a bootstrap CI) from two independent codings of the six-platform policy matrix:
+
+```bash
+python poc/kappa_policy_audit.py --second-coder-sheet   # write the blank second-coder sheet
+python poc/kappa_policy_audit.py                  # compute κ once both codings are filled
+```
+
+The second coder fills `poc/policy_audit_coder_JL.csv` blind; the first coder's sheet is kept private until the codings are merged (so κ stays valid).
+
+## Reproducibility notes
+
+All randomness derives from `config.MASTER_SEED`; numeric backends are pinned to a single thread and tree models use an exact split-finder, so results are bit-reproducible. On Windows, if the newest wheels fail to load, pin `pandas==2.2.3`, `numpy==2.2.6`, `scikit-learn==1.6.1`; `scipy<1.15` is required for `diffprivlib` compatibility (see `requirements.txt`).
+
+## License
+
+Code: MIT. Documentation: CC-BY-4.0.

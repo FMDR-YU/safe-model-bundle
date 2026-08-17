@@ -17,7 +17,8 @@ for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import (MASTER_SEED, N_POPULATION, OUT, FEATURES, OUTCOME, SEED_LIST)
+from config import (MASTER_SEED, N_POPULATION, OUT, FEATURES, OUTCOME, SEED_LIST,
+                    DATA_VERSION, SUBSTRATE)
 from src.utils import make_model, model_quality, save_table, save_json, sha256_file
 from src import d1_synthesize as d1
 from src import d2_risk_a_pickle as d2a
@@ -32,32 +33,33 @@ import pickle
 
 def main():
     print("=" * 70)
-    print("KoGES model-export PoC  |  seed =", MASTER_SEED)
+    print(f"Model-export PoC  |  substrate={SUBSTRATE}  seed={MASTER_SEED}")
     print("=" * 70)
 
-    # ---------------- D1: synthesis ----------------
-    print("\n[D1] synthesising KoGES-schema population ...")
-    pop = d1.generate_population(N_POPULATION, MASTER_SEED)
-    pop.to_csv(os.path.join(OUT, "synthetic_population.csv"), index=False)
-    print(f"     n={len(pop)}  T2DM prevalence={pop[OUTCOME].mean():.3f}")
+    # ---------------- D1: cohort ----------------
+    print(f"\n[D1] loading cohort (substrate={SUBSTRATE}) ...")
+    pop = d1.get_population(MASTER_SEED)
+    pop.to_csv(os.path.join(OUT, "cohort.csv"), index=False)
+    prov = getattr(pop, "attrs", {}).get("provenance", {})
+    print(f"     n={len(pop)}  {OUTCOME} prevalence={pop[OUTCOME].mean():.3f}")
+    if prov:
+        print(f"     provenance: {prov}")
 
-    # synthpop-style synthesiser + fidelity (demonstrates the chosen method)
-    syn = d1.cart_synthesize(pop, n=len(pop), seed=MASTER_SEED + 1)
-    fidelity = d1.fidelity_report(pop, syn)
-    save_table(fidelity, "tableD0_synth_fidelity", OUT)
-    print("     synthpop-style fidelity (max |mean delta|): "
-          f"{fidelity['abs_mean_delta'].max():.3f}")
-    disclosure = d1.disclosure_report(pop, syn)
-    print(f"     disclosure: exact_duplicates={disclosure['exact_duplicates']} "
-          f"(rate={disclosure['exact_duplicate_rate']})  "
-          f"NN-dist min={disclosure['nn_dist_min']} mean={disclosure['nn_dist_mean']}")
-    dcr_table, dcr_summary, d_syn, d_real = d1.dcr_report(pop, syn)
-    save_table(dcr_table, "tableD0b_dcr", OUT)
-    dcr_fig = d1.plot_dcr(d_syn, d_real, os.path.join(OUT, "figD2_dcr.png"))
-    print(f"     DCR: synth_min={dcr_summary['dcr_synth_min']} vs "
-          f"real_min={dcr_summary['dcr_real_min']} "
-          f"(ratio={dcr_summary['min_ratio_synth_over_real']}, "
-          f"<real_p01={dcr_summary['pct_synth_below_real_p01']}%) -> {os.path.basename(dcr_fig)}")
+    # Self-synthesis fidelity/DCR exhibits (tableD0/tableD0b/figD2) apply ONLY to
+    # the legacy self-authored substrate; with a standard public benchmark the
+    # model trains on the public data directly (no author-made synthetic release).
+    disclosure = dcr_summary = dcr_fig = None
+    if SUBSTRATE == "koges":
+        syn = d1.cart_synthesize(pop, n=len(pop), seed=MASTER_SEED + 1)
+        fidelity = d1.fidelity_report(pop, syn)
+        save_table(fidelity, "tableD0_synth_fidelity", OUT)
+        disclosure = d1.disclosure_report(pop, syn)
+        dcr_table, dcr_summary, d_syn, d_real = d1.dcr_report(pop, syn)
+        save_table(dcr_table, "tableD0b_dcr", OUT)
+        dcr_fig = d1.plot_dcr(d_syn, d_real, os.path.join(OUT, "figD2_dcr.png"))
+        print(f"     synth fidelity(max|Δmean|)={fidelity['abs_mean_delta'].max():.3f} "
+              f"exact_dups={disclosure['exact_duplicates']} "
+              f"DCR_ratio={dcr_summary['min_ratio_synth_over_real']}")
 
     members, attacker, nonmembers = d1.membership_split(pop, MASTER_SEED)
     print(f"     members={len(members)} attacker_pool={len(attacker)} "
@@ -108,11 +110,14 @@ def main():
     with open(safe_pkl, "wb") as f:
         pickle.dump(safe_model, f)
 
+    # Gate-2 decision uses the 10-seed MEAN leakage (robust to single-seed noise),
+    # not a single representative draw. Fig 3 ROC still shows the seed-0 curve.
     d3_table, extras, sweep = d4.run(
-        leaky_metrics=mia0["leaky"],
-        safe_metrics=mia0["safe"],
+        leaky_metrics=mia_agg["leaky"],
+        safe_metrics=mia_agg["safe"],
         members=members, full_df=pop, seed=MASTER_SEED,
-        model_artifact_path=safe_pkl, out_dir=OUT)
+        model_artifact_path=safe_pkl, out_dir=OUT,
+        escrow_metrics=mia0["safe"])   # seed-0 instance for Gate-3 reproducibility
     save_table(d3_table, "tableD3_three_gate_results", OUT)
     save_table(sweep, "tableD3b_threshold_sweep", OUT)
     save_json(extras, os.path.join(OUT, "tableD3_extras.json"))
@@ -130,28 +135,37 @@ def main():
     print(f"     Fig S2 (cost) saved -> {os.path.basename(cost_fig)}")
 
     # ---------------- summary ----------------
-    save_json({
+    tables = ["tableD1_risk_decomposition", "tableD2_format_comparison",
+              "tableD3_three_gate_results", "tableD3b_threshold_sweep",
+              "tableS1_dp_sweep"]
+    artifacts = {
+        "cohort": "cohort.csv",
+        "fig3": os.path.basename(fig3),
+        "figS1_dp_sweep": os.path.basename(dp_fig),
+        "figS2_cost": os.path.basename(cost_fig),
+    }
+    summary = {
+        "substrate": SUBSTRATE,
+        "data_version": DATA_VERSION,
+        "cohort_summary": {"n": int(len(pop)), "outcome": OUTCOME,
+                           "prevalence": round(float(pop[OUTCOME].mean()), 4),
+                           "provenance": prov},
         "risk_a": risk_a,
         "risk_b_mia_agg": mia_agg,
         "risk_b_mia_seed0": mia0,
-        "synth_disclosure": disclosure,
-        "synth_dcr": dcr_summary,
         "gate3": extras["gate3_reproducibility"],
         "threshold_sweep": extras["threshold_sweep"],
         "cost": extras["cost_model"],
         "dp_sweep_supplementary": dp_table.to_dict("records"),
-        "artifacts": {
-            "synthetic_population": "synthetic_population.csv",
-            "fig3": os.path.basename(fig3),
-            "figD2_dcr": os.path.basename(dcr_fig),
-            "figS1_dp_sweep": os.path.basename(dp_fig),
-            "figS2_cost": os.path.basename(cost_fig),
-            "tables": ["tableD0_synth_fidelity", "tableD0b_dcr",
-                       "tableD1_risk_decomposition", "tableD2_format_comparison",
-                       "tableD3_three_gate_results", "tableD3b_threshold_sweep",
-                       "tableS1_dp_sweep"],
-        },
-    }, os.path.join(OUT, "summary.json"))
+    }
+    if disclosure is not None:                       # koges self-synthesis only
+        summary["synth_disclosure"] = disclosure
+        summary["synth_dcr"] = dcr_summary
+        tables = ["tableD0_synth_fidelity", "tableD0b_dcr"] + tables
+        artifacts["figD2_dcr"] = os.path.basename(dcr_fig)
+    artifacts["tables"] = tables
+    summary["artifacts"] = artifacts
+    save_json(summary, os.path.join(OUT, "summary.json"))
     print("\nDone. All exhibits written to:", OUT)
 
 
