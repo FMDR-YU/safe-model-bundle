@@ -4,12 +4,16 @@ Black-and-white publication figures for the Safe Model Bundle manuscript.
 Titles are NOT baked into the images (PLOS: titles belong in the caption);
 sans-serif; grayscale only (distinguished by line style / shade / hatch).
 
-Concept figures (drawn): Fig 1, Fig 2, Fig 4, S2 Fig (cost).
-Data figures (recomputed deterministically from the PoC): Fig 3 (ROC), S1 Fig (DCR).
+The manuscript carries three figures (renumbered after the rework):
+  Fig 1  risk decomposition, ingress vs egress (drawn)          -> fig2()
+  Fig 2  MIA ROC, leaky vs safe (recomputed from the PoC)       -> fig3_roc_bw()
+  Fig 3  three-gate export pipeline (drawn)                     -> fig4()
 
-Outputs to ../results/ : {Fig1,Fig2,Fig3,Fig4,S1_Fig,S2_Fig}.png (200 dpi)
-and matching grayscale LZW .tif (600 dpi) for PLOS submission.
-Deterministic: thread-pinned + fixed seed -> identical to the canonical run.
+Outputs to ../results/ : {Fig1,Fig2,Fig3}.png (200 dpi) and matching
+grayscale LZW .tif (600 dpi). Deterministic: thread-pinned + fixed seed
+-> identical to the canonical run. The retired concept/data figures
+(spectrum, DCR, cost) remain defined below for reference but are no
+longer emitted by default.
 """
 import os
 # pin numeric backends before numpy/xgboost import (bit-reproducible recompute)
@@ -110,40 +114,41 @@ def fig1():
 
 # ---------------------------------------------------------------- Fig 2
 def fig2():
-    fig, ax = plt.subplots(figsize=(10.5, 5.0))
-    ax.set_xlim(0, 10.5); ax.set_ylim(0, 5.2); ax.axis("off")
-    box(ax, 5.25, 2.8, 2.3, 2.2,
-        "Closed platform\n/ TRE\n\nde-identified data\n“behind glass”",
-        PLAT_F, fs=9.3, weight="bold")
-    ax.text(0.2, 4.85, "Risk A — INGRESS", ha="left", va="center",
-            fontsize=10.5, weight="bold", color=BLACK)
-    ax.text(0.2, 4.52, "code execution on deserialization · property of the FORMAT",
-            ha="left", va="center", fontsize=8.6, color=BLACK)
-    box(ax, 1.5, 3.9, 1.8, 0.7, "Model file\n(pickle)", NEU_F, fs=9)
-    arrow(ax, (2.45, 3.87), (4.05, 3.55), lw=2.2)
-    ax.text(3.2, 4.0, "load /\ndeserialize", ha="center", va="bottom",
-            fontsize=8, color=BLACK, linespacing=1.1)
-    ax.text(5.25, 3.55, "⚡ arbitrary\ncode runs", ha="center", va="center",
-            fontsize=8.3, color=BLACK, weight="bold", linespacing=1.1)
-    box(ax, 2.3, 2.75, 3.1, 0.72,
-        "Mitigation: code-free format\n(skops / ONNX)", MIT_F, fs=8.6, weight="bold")
-    ax.text(0.2, 1.9, "Risk B — EGRESS", ha="left", va="center",
-            fontsize=10.5, weight="bold", color=BLACK)
-    ax.text(0.2, 1.57, "training-data leakage · property of the MODEL",
-            ha="left", va="center", fontsize=8.6, color=BLACK)
-    ax.text(8.85, 3.28, "membership inference / model inversion\n→ training data leaked",
-            ha="center", va="center", fontsize=8.0, color=BLACK, linespacing=1.2)
-    arrow(ax, (6.4, 2.4), (7.9, 2.4), lw=2.2)
-    ax.text(7.15, 2.57, "export", ha="center", va="bottom", fontsize=8, color=BLACK)
-    box(ax, 8.85, 2.4, 2.0, 0.7, "Released\nmodel", NEU_F, fs=9)
-    box(ax, 7.8, 1.35, 3.6, 0.72,
-        "Mitigation: leakage-audit certificate\n(MIA AUC ≤ 0.55)",
-        MIT_F, fs=8.6, weight="bold")
-    ax.add_patch(Rectangle((0.2, 0.08), 10.1, 0.46, facecolor="#ededed",
-                 edgecolor=BLACK, lw=1.0, zorder=2))
-    ax.text(5.25, 0.31,
-            "Blocking the pickle format targets Risk A’s vector only; Risk B survives any format → the format block is miscalibrated.",
-            ha="center", va="center", fontsize=8.8, color=BLACK, weight="bold", zorder=4)
+    # Left/right symmetric: Risk A (ingress) | Risk B (egress), mirrored about x=5.5.
+    # No summary sentence in the image (it belongs in the caption).
+    fig, ax = plt.subplots(figsize=(11, 6.2))
+    ax.set_xlim(0, 11); ax.set_ylim(0, 6.2); ax.axis("off")
+    LX, RX = 2.75, 8.25                      # symmetric column centres
+
+    # shared platform box spanning the top centre
+    box(ax, 5.5, 5.55, 4.2, 0.8,
+        "Closed platform / TRE\nde-identified data held in-environment",
+        PLAT_F, fs=9.5, weight="bold")
+
+    # central vertical divider between the two risks
+    ax.plot([5.5, 5.5], [0.35, 4.9], ls=(0, (5, 4)), color=GRAY, lw=1.3, zorder=1)
+
+    def column(cx, header, sub, node_label, threat, mit):
+        ax.text(cx, 4.78, header, ha="center", va="center",
+                fontsize=11, weight="bold", color=BLACK)
+        ax.text(cx, 4.40, sub, ha="center", va="center",
+                fontsize=8.4, color=BLACK, linespacing=1.2)
+        box(ax, cx, 3.60, 2.35, 0.72, node_label, NEU_F, fs=9)
+        arrow(ax, (cx, 3.18), (cx, 2.66), lw=2.1)
+        ax.text(cx, 2.28, threat, ha="center", va="center",
+                fontsize=8.3, color=BLACK, weight="bold", linespacing=1.2)
+        box(ax, cx, 1.20, 2.9, 0.82, mit, MIT_F, fs=8.5, weight="bold")
+
+    column(LX, "Risk A — INGRESS",
+           "code execution on load\n· property of the FORMAT",
+           "Model file (pickle)",
+           "arbitrary code runs",
+           "Mitigation: code-free format\n(skops / ONNX)")
+    column(RX, "Risk B — EGRESS",
+           "training-data leakage\n· property of the MODEL",
+           "Released model",
+           "membership inference\n→ training data leaked",
+           "Mitigation: leakage-audit\ncertificate")
     return fig
 
 
@@ -191,7 +196,7 @@ def fig4():
     gate(3.25, "GATE 1 — Safe format",
          "pickle → skops / ONNX\nno load-time code\ninference parity (Δ=0)")
     gate(5.85, "GATE 2 — Leakage audit",
-         "shadow MIA\n\nAUC ≤ 0.55 ?")
+         "leakage certificate\nshadow MIA + LiRA /\nattribute / reconstr.\n(AUC ≤ 0.55)")
     gate(8.6, "GATE 3 — Escrow",
          "model + environment\n(container, lock, seed,\ndata version) · signed hash\nre-run Δ ≤ 1e-4")
     # Gate 3 -> bundle arrow, and the export-boundary line at its MIDPOINT
@@ -219,9 +224,9 @@ def fig4():
             color=BLACK, style="italic")
     ax.text(3.25, yg - 1.02, "Δ = 0.0\nlossless", ha="center", va="top",
             fontsize=8.0, color=GRAY, linespacing=1.15)
-    ax.text(5.85, yg - 1.02, "leaky 0.59 → BLOCK\nsafe 0.51 → PASS", ha="center", va="top",
+    ax.text(5.85, yg - 1.02, "leaky 0.755 → BLOCK\nsafe 0.547 → PASS", ha="center", va="top",
             fontsize=8.0, color=GRAY, linespacing=1.15)
-    ax.text(8.6, yg - 1.02, "re-run Δ = 2e-5\nreproducible", ha="center", va="top",
+    ax.text(8.6, yg - 1.02, "re-run Δ = 5e-5\nreproducible", ha="center", va="top",
             fontsize=8.0, color=GRAY, linespacing=1.15)
     return fig
 
@@ -306,8 +311,8 @@ def _save(fig, stem):
 
 
 if __name__ == "__main__":
-    for fn, stem in [(fig1, "Fig1"), (fig2, "Fig2"), (fig3_roc_bw, "Fig3"),
-                     (fig4, "Fig4"), (s1_dcr_bw, "S1_Fig"), (figS2_cost, "S2_Fig")]:
+    # manuscript figures, in submission order (see module docstring)
+    for fn, stem in [(fig2, "Fig1"), (fig3_roc_bw, "Fig2"), (fig4, "Fig3")]:
         png, tif = _save(fn(), stem)
         print("wrote", os.path.basename(png), "+", os.path.basename(tif))
     print("done ->", RESULTS)
