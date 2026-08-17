@@ -1,0 +1,3 @@
+regime,shadow_mia_auc,shadow_ci95,lira_auc,lira_ci95,lira_tpr_at_1pct_fpr,attr_infer_member_acc,attr_infer_nonmember_acc,attr_baseline,recon_member_advantage,recon_adv_ci95
+leaky,0.7597,0.734-0.785,0.7377,0.720-0.755,0.1693,0.592,0.494,0.7567,0.098,0.068-0.128
+safe,0.5481,0.514-0.583,0.6447,0.624-0.666,0.0427,0.6647,0.6347,0.7567,0.03,-0.023-0.083
