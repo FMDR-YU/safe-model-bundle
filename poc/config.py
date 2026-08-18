@@ -117,8 +117,8 @@ DP_EPSILON_SWEEP = [0.5, 1.0, 2.0, 4.0, 8.0]   # supplementary epsilon-sweep
 
 # ----------------------------------------------------------------------------
 # Gate-3 escrow cost model -- Naver Cloud Platform (NCP) published list prices.
-# NCP is the CSAP-certified domestic cloud for an illustrative Korean deployment,
-# so it is the relevant unit-cost basis for a Korean deployment. Prices are in
+# NCP is a Korean domestic cloud; its published list prices are an illustrative
+# unit-cost basis for a Korean deployment. Prices are in
 # KRW, retrieved 2026-06-05 from ncloud.com/charge (Standard g3 2vCPU/8GB server
 # and Object Storage, KR region). Figures are illustrative, not a quote.
 # ----------------------------------------------------------------------------
