@@ -222,12 +222,6 @@ def fig4():
     arrow(ax, (6.4, 4.01), (6.4, yg + 0.78), lw=2.0, ls=(0, (4, 3)))
     ax.text(7.05, yg + 1.32, "re-audit", ha="center", va="center", fontsize=8.0,
             color=BLACK, style="italic")
-    ax.text(3.25, yg - 1.02, "Δ = 0.0\nlossless", ha="center", va="top",
-            fontsize=8.0, color=GRAY, linespacing=1.15)
-    ax.text(5.85, yg - 1.02, "leaky 0.755 → BLOCK\nsafe 0.547 → PASS", ha="center", va="top",
-            fontsize=8.0, color=GRAY, linespacing=1.15)
-    ax.text(8.6, yg - 1.02, "re-run Δ = 5e-5\nreproducible", ha="center", va="top",
-            fontsize=8.0, color=GRAY, linespacing=1.15)
     return fig
 
 
