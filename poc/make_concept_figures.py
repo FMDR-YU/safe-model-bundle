@@ -181,8 +181,8 @@ def fig3_roc_bw():
 
 # ---------------------------------------------------------------- Fig 4
 def fig4():
-    fig, ax = plt.subplots(figsize=(12, 5.0))
-    ax.set_xlim(0, 12); ax.set_ylim(0, 5.2); ax.axis("off")
+    fig, ax = plt.subplots(figsize=(12.4, 5.0))
+    ax.set_xlim(0, 12.4); ax.set_ylim(0, 5.2); ax.axis("off")
     yg = 2.55
     box(ax, 1.0, yg, 1.5, 1.25, "Trained\nmodel in\nplatform\n(pickle)", NEU_F, fs=8.8)
 
@@ -205,7 +205,7 @@ def fig4():
     ax.plot([xb, xb], [0.55, 4.55], ls=(0, (5, 4)), color=GRAY, lw=1.4, zorder=1)
     ax.text(xb, 4.62, "export boundary", ha="center", va="bottom",
             fontsize=8, style="italic", color=GRAY)
-    box(ax, 11.0, yg, 1.7, 1.7,
+    box(ax, 11.15, yg, 2.0, 1.7,
         "SAFE MODEL\nBUNDLE\n\nsafe-format model\n+ leakage certificate\n+ signed escrow",
         EMPH_F, fs=8.2, weight="bold", lw=2.4)
     arrow(ax, (1.78, yg), (2.08, yg), lw=1.9)
