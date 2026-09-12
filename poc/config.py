@@ -55,9 +55,12 @@ FEATURES = CONTINUOUS_VARS + CATEGORICAL_VARS
 # Data substrate (T4: standard PUBLIC benchmark replaces the KoGES-schema DGP,
 # so the data-generating process is external to the authors -- cuts reviewer
 # R1#2 "tautology"). Select with env var POC_SUBSTRATE.
-#   "synpuf"  = CMS DE-SynPUF 2008 Beneficiary Summary (~116k, claims) -- MAIN
-#   "synthea" = OHDSI Synthea27Nj OMOP (metabolic labs) -- 27-person demo, smoke test only
-#   "koges"   = legacy self-authored KoGES-schema synthetic DGP (pre-pivot)
+#   "synpuf"   = CMS DE-SynPUF 2008 Beneficiary Summary (~116k, claims) -- MAIN
+#   "synthea"  = OHDSI Synthea27Nj OMOP (metabolic labs) -- 27-person demo, smoke test only
+#   "mimic_ed" = MIMIC-IV-ED, one row per ED stay, outcome = hospital admission.
+#                The open demo release is 222 stays (smoke test only); the full
+#                ~425k release is credentialed and must not be redistributed.
+#   "koges"    = legacy self-authored KoGES-schema synthetic DGP (pre-pivot)
 # ----------------------------------------------------------------------------
 SUBSTRATE = os.environ.get("POC_SUBSTRATE", "synpuf")
 
@@ -85,6 +88,18 @@ SYNPUF_CSV = os.path.join(_DATA_ROOT, "synpuf",
                           "DE1_0_2008_Beneficiary_Summary_File_Sample_1.csv")
 SYNTHEA_DIR = os.path.join(_DATA_ROOT, "Synthea27Nj")
 
+# MIMIC-IV-ED sits beside data/cdm/, not inside it: it is not an OMOP CDM
+# release. POC_MIMIC_ED_DIR overrides; otherwise prefer the full release and
+# fall back to the open demo.
+MIMIC_ED_DIR = os.environ.get("POC_MIMIC_ED_DIR") or next(
+    (p for p in (
+        os.path.join(_DATA_ROOT, "..", "mimic-iv-ed", "full-2.2", "ed"),
+        os.path.join(_DATA_ROOT, "..", "mimic-iv-ed", "demo-2.2", "ed"),
+    ) if os.path.isdir(p)),
+    os.path.join(_DATA_ROOT, "..", "mimic-iv-ed", "demo-2.2", "ed"),
+)
+MIMIC_ED_DIR = os.path.abspath(MIMIC_ED_DIR)
+
 if SUBSTRATE == "synpuf":
     from src.synpuf_loader import (CONTINUOUS_VARS, CATEGORICAL_VARS,  # noqa: F811,E402
                                    OUTCOME, FEATURES)
@@ -93,6 +108,11 @@ elif SUBSTRATE == "synthea":
     from src.omop_loader import (CONTINUOUS_VARS, CATEGORICAL_VARS,    # noqa: F811,E402
                                  OUTCOME, FEATURES)
     DATA_VERSION = "ohdsi-synthea27nj-omop"
+elif SUBSTRATE == "mimic_ed":
+    from src.mimic_ed_loader import (CONTINUOUS_VARS, CATEGORICAL_VARS,  # noqa: F811,E402
+                                     OUTCOME, FEATURES)
+    DATA_VERSION = ("mimic-iv-ed-2.2-full" if "full-2.2" in MIMIC_ED_DIR
+                    else "mimic-iv-ed-demo-2.2")
 # else "koges": keep the KoGES-schema defaults above (DATA_VERSION=koges-synth-v1)
 
 # ----------------------------------------------------------------------------

@@ -253,7 +253,8 @@ def get_population(seed: int) -> pd.DataFrame:
       and cached; the seed then varies only the downstream membership split and
       shadow models, not the data (the DGP is external to the authors -> R1#2).
     """
-    from config import SUBSTRATE, N_POPULATION, SYNPUF_CSV, SYNTHEA_DIR
+    from config import (SUBSTRATE, N_POPULATION, SYNPUF_CSV, SYNTHEA_DIR,
+                        MIMIC_ED_DIR)
     if SUBSTRATE == "koges":
         return generate_population(N_POPULATION, seed)
     if "pop" not in _POP_CACHE:
@@ -263,6 +264,9 @@ def get_population(seed: int) -> pd.DataFrame:
         elif SUBSTRATE == "synthea":
             from src.omop_loader import load_omop_cohort
             _POP_CACHE["pop"] = load_omop_cohort(SYNTHEA_DIR).reset_index(drop=True)
+        elif SUBSTRATE == "mimic_ed":
+            from src.mimic_ed_loader import load_mimic_ed_cohort
+            _POP_CACHE["pop"] = load_mimic_ed_cohort(MIMIC_ED_DIR).reset_index(drop=True)
         else:
             raise ValueError(f"unknown SUBSTRATE: {SUBSTRATE}")
     return _POP_CACHE["pop"]
@@ -278,10 +282,22 @@ def membership_split(df: pd.DataFrame, seed: int, n_members: int | None = None):
     small-cohort regime that makes a high-capacity default model overfit and leak.
     """
     n_members = N_TRAIN_MEMBERS if n_members is None else n_members
-    rng = np.random.default_rng(seed)
-    idx = rng.permutation(len(df))
     n_tr = int(n_members)
     n_at = int(ATTACKER_FRAC * len(df))
+    # Slicing past the end of a DataFrame yields empty frames rather than an
+    # error, so a cohort smaller than the protocol needs would silently produce
+    # an empty attacker pool and no non-members, and the attack would report
+    # meaningless numbers instead of failing. Check it up front.
+    if len(df) <= n_tr + n_at:
+        raise ValueError(
+            f"cohort has {len(df)} rows but the membership-inference protocol "
+            f"needs more than {n_tr + n_at} ({n_tr} members + {n_at} attacker "
+            f"pool, leaving non-members). Use a larger substrate: the "
+            f"Synthea27Nj and MIMIC-IV-ED demo releases are loader smoke tests, "
+            f"not experiment substrates."
+        )
+    rng = np.random.default_rng(seed)
+    idx = rng.permutation(len(df))
     members = df.iloc[idx[:n_tr]].reset_index(drop=True)
     attacker = df.iloc[idx[n_tr:n_tr + n_at]].reset_index(drop=True)
     nonmembers = df.iloc[idx[n_tr + n_at:]].reset_index(drop=True)
